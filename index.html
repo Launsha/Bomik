@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Komik</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #121212; color: white; transition: 0.3s; }
+
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #00ff99; }
+        .navbar h2 { font-size: 22px; }
+        .navbar .fa { cursor: pointer; font-size: 22px; transition: 0.3s; }
+        .navbar .fa:hover { color: #fff; transform: scale(1.1); }
+
+        .sidebar { position: fixed; left: -260px; top: 0; width: 250px; height: 100vh; background: #1b1b1b; padding-top: 60px; transition: 0.3s; }
+        .sidebar.show { left: 0; }
+        .sidebar a { display: block; padding: 15px; color: #ddd; text-decoration: none; transition: 0.3s; }
+        .sidebar a:hover { background: #00ff99; color: #000; transform: scale(1.05); }
+
+        .container { max-width: 500px; margin: 40px auto; padding: 20px; background: #222; border-radius: 10px; box-shadow: 0 0 15px rgba(0, 255, 153, 0.5); }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: none; font-size: 16px; }
+        input { background: #333; color: #fff; border: 1px solid #00ff99; }
+        select { background: #444; color: #fff; }
+        button { background: #00ff99; color: #000; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        button:hover { background: #00cc77; transform: scale(1.05); }
+
+        .riwayat-container { max-width: 600px; margin: 30px auto; }
+        table { width: 100%; border-collapse: collapse; background: #222; color: white; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #00ff99; }
+        th { background: #00ff99; color: #000; }
+        tr:hover { background: #333; transition: 0.3s; }
+        .fa-trash { color: red; cursor: pointer; transition: 0.3s; }
+        .fa-trash:hover { color: #ff4444; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h2>Bookmark Komik</h2>
+        <i class="fa fa-bars" onclick="toggleSidebar()"></i>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <a href="#">Home</a>
+        <a href="#">Riwayat</a>
+        <a href="#">Pengaturan</a>
+    </div>
+
+    <div class="container">
+        <h3>Tambah Riwayat Komik</h3>
+        <input type="text" id="judul" placeholder="Judul Komik">
+        <input type="number" id="chapter" placeholder="Chapter">
+        <select id="sumber">
+            <option value="Shinigami">Shinigami</option>
+            <option value="Komiku">Komiku</option>
+            <option value="Komikindo">Komikindo</option>
+            <option value="Mangaku">Mangaku</option>
+        </select>
+        <button onclick="tambahRiwayat()">Simpan</button>
+        <button onclick="cekRiwayat()">Cek Judul</button>
+    </div>
+
+    <div class="riwayat-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Judul</th>
+                    <th>Chapter</th>
+                    <th>Sumber</th>
+                    <th>Hapus</th>
+                </tr>
+            </thead>
+            <tbody id="riwayat"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("show");
+        }
+
+        function tambahRiwayat() {
+            let judul = document.getElementById("judul").value.trim();
+            let chapter = document.getElementById("chapter").value;
+            let sumber = document.getElementById("sumber").value;
+
+            if (!judul || !chapter) {
+                alert("Harap isi semua field!");
+                return;
+            }
+
+            let riwayat = JSON.parse(localStorage.getItem("riwayatKomik")) || [];
+            riwayat.push({ judul, chapter, sumber });
+            localStorage.setItem("riwayatKomik", JSON.stringify(riwayat));
+
+            tampilkanRiwayat();
+        }
+
+        function cekRiwayat() {
+            let judul = document.getElementById("judul").value.trim();
+            let riwayat = JSON.parse(localStorage.getItem("riwayatKomik")) || [];
+            let ditemukan = riwayat.some(item => item.judul.toLowerCase() === judul.toLowerCase());
+
+            alert(ditemukan ? "Komik ini sudah pernah dibaca!" : "Belum pernah membaca komik ini.");
+        }
+
+        function tampilkanRiwayat() {
+            let riwayat = JSON.parse(localStorage.getItem("riwayatKomik")) || [];
+            let container = document.getElementById("riwayat");
+            container.innerHTML = "";
+
+            riwayat.forEach((item, index) => {
+                container.innerHTML += `
+                    <tr>
+                        <td>${item.judul}</td>
+                        <td>${item.chapter}</td>
+                        <td>${item.sumber}</td>
+                        <td><i class="fa fa-trash" onclick="hapusRiwayat(${index})"></i></td>
+                    </tr>`;
+            });
+        }
+
+        function hapusRiwayat(index) {
+            let riwayat = JSON.parse(localStorage.getItem("riwayatKomik")) || [];
+            riwayat.splice(index, 1);
+            localStorage.setItem("riwayatKomik", JSON.stringify(riwayat));
+            tampilkanRiwayat();
+        }
+
+        tampilkanRiwayat();
+    </script>
+
+</body>
+</html>

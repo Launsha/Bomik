@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic Reading Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #4f46e5;
+            --accent-hover: #6366f1;
+            --border: #4a4a4a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--bg-secondary);
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .type-manga { background: #dc2626; color: white; }
+        .type-manhua { background: #ea580c; color: white; }
+        .type-manhwa { background: #059669; color: white; }
+
+        .rating {
+            color: #fbbf24;
+        }
+
+        .synopsis {
+            margin-top: 12px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            border-radius: 6px;
+        }
+
+        .btn-edit {
+            background: var(--warning);
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        .btn-delete {
+            background: var(--error);
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .config-section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .config-title {
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-success { background: var(--success); color: white; }
+        .status-error { background: var(--error); color: white; }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .modal-content {
+                padding: 20px;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Comic Reading Tracker</h1>
+            <p>Kelola riwayat baca komik favorit Anda</p>
+        </div>
+
+        <!-- GitHub Configuration -->
+        <div class="config-section">
+            <h3 class="config-title">⚙️ Konfigurasi GitHub</h3>
+            <div class="form-group">
+                <label>GitHub Token:</label>
+                <input type="password" id="githubToken" placeholder="Masukkan GitHub Personal Access Token">
+            </div>
+            <div class="form-group">
+                <label>Repository (format: username/repo-name):</label>
+                <input type="text" id="githubRepo" placeholder="contoh: username/comic-tracker">
+            </div>
+            <button class="btn" onclick="saveConfig()">Simpan Konfigurasi</button>
+            <span id="configStatus"></span>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Cari komik...">
+            </div>
+            <button class="btn" onclick="openModal()">+ Tambah Komik</button>
+            <button class="btn btn-secondary" onclick="loadFromGitHub()">🔄 Sinkronisasi</button>
+        </div>
+
+        <!-- Comic Grid -->
+        <div id="comicGrid" class="grid"></div>
+
+        <!-- Modal -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <h2 class="modal-title" id="modalTitle">Tambah Komik Baru</h2>
+                
+                <div class="form-group">
+                    <label>Cover:</label>
+                    <input type="file" id="coverInput" accept="image/*">
+                    <img id="coverPreview" class="image-preview" style="display: none;">
+                </div>
+
+                <div class="form-group">
+                    <label>Judul:</label>
+                    <input type="text" id="titleInput" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Chapter:</label>
+                    <input type="text" id="chapterInput" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipe:</label>
+                    <select id="typeInput" required>
+                        <option value="">Pilih Tipe</option>
+                        <option value="manga">Manga</option>
+                        <option value="manhua">Manhua</option>
+                        <option value="manhwa">Manhwa</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Rating (1-10):</label>
+                    <input type="number" id="ratingInput" min="1" max="10" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggal:</label>
+                    <input type="date" id="dateInput" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Sinopsis:</label>
+                    <textarea id="synopsisInput" rows="4"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                    <button class="btn" id="saveBtn" onclick="saveComic()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let comics = [];
+        let editingIndex = -1;
+        let githubConfig = {
+            token: '',
+            repo: ''
+        };
+
+        // Load configuration from localStorage
+        function loadConfig() {
+            const saved = localStorage.getItem('githubConfig');
+            if (saved) {
+                githubConfig = JSON.parse(saved);
+                document.getElementById('githubToken').value = githubConfig.token;
+                document.getElementById('githubRepo').value = githubConfig.repo;
+                updateConfigStatus();
+            }
+        }
+
+        // Save configuration
+        function saveConfig() {
+            const token = document.getElementById('githubToken').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
+            
+            if (!token || !repo) {
+                alert('Mohon isi GitHub Token dan Repository!');
+                return;
+            }
+
+            githubConfig = { token, repo };
+            localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
+            updateConfigStatus();
+            loadFromGitHub(); // Auto load data after config
+        }
+
+        function updateConfigStatus() {
+            const status = document.getElementById('configStatus');
+            if (githubConfig.token && githubConfig.repo) {
+                status.innerHTML = '<span class="status-indicator status-success">Terkonfigurasi</span>';
+            } else {
+                status.innerHTML = '<span class="status-indicator status-error">Belum Dikonfigurasi</span>';
+            }
+        }
+
+        // Convert image to base64
+        function imageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // GitHub API functions
+        async function loadFromGitHub() {
+            if (!githubConfig.token || !githubConfig.repo) {
+                alert('Mohon konfigurasi GitHub terlebih dahulu!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/bookmarks.json`, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = atob(data.content);
+                    comics = JSON.parse(content);
+                    renderComics();
+                    alert('Data berhasil dimuat dari GitHub!');
+                } else if (response.status === 404) {
+                    // File doesn't exist yet, start with empty array
+                    comics = [];
+                    renderComics();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error loading from GitHub:', error);
+                alert('Gagal memuat data dari GitHub: ' + error.message);
+            }
+        }
+
+        async function saveToGitHub() {
+            if (!githubConfig.token || !githubConfig.repo) {
+                alert('Mohon konfigurasi GitHub terlebih dahulu!');
+                return false;
+            }
+
+            try {
+                // Get current file SHA if exists
+                let sha = null;
+                try {
+                    const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/bookmarks.json`, {
+                        headers: {
+                            'Authorization': `token ${githubConfig.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        sha = data.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist, that's ok
+                }
+
+                // Update file
+                const content = btoa(JSON.stringify(comics, null, 2));
+                const updateData = {
+                    message: `Update bookmarks.json - ${new Date().toISOString()}`,
+                    content: content
+                };
+                
+                if (sha) {
+                    updateData.sha = sha;
+                }
+
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/bookmarks.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    alert('Data berhasil disimpan ke GitHub!');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error saving to GitHub:', error);
+                alert('Gagal menyimpan ke GitHub: ' + error.message);
+                return false;
+            }
+        }
+
+        // Modal functions
+        function openModal(index = -1) {
+            editingIndex = index;
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const saveBtn = document.getElementById('saveBtn');
+
+            if (index >= 0) {
+                modalTitle.textContent = 'Edit Komik';
+                saveBtn.textContent = 'Update';
+                fillForm(comics[index]);
+            } else {
+                modalTitle.textContent = 'Tambah Komik Baru';
+                saveBtn.textContent = 'Simpan';
+                clearForm();
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            clearForm();
+        }
+
+        function clearForm() {
+            document.getElementById('coverInput').value = '';
+            document.getElementById('coverPreview').style.display = 'none';
+            document.getElementById('titleInput').value = '';
+            document.getElementById('chapterInput').value = '';
+            document.getElementById('typeInput').value = '';
+            document.getElementById('ratingInput').value = '';
+            document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('synopsisInput').value = '';
+        }
+
+        function fillForm(comic) {
+            if (comic.cover) {
+                const preview = document.getElementById('coverPreview');
+                preview.src = comic.cover;
+                preview.style.display = 'block';
+            }
+            document.getElementById('titleInput').value = comic.title;
+            document.getElementById('chapterInput').value = comic.chapter;
+            document.getElementById('typeInput').value = comic.type;
+            document.getElementById('ratingInput').value = comic.rating;
+            document.getElementById('dateInput').value = comic.date;
+            document.getElementById('synopsisInput').value = comic.synopsis || '';
+        }
+
+        // Cover preview
+        document.getElementById('coverInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('coverPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Save comic
+        async function saveComic() {
+            const title = document.getElementById('titleInput').value.trim();
+            const chapter = document.getElementById('chapterInput').value.trim();
+            const type = document.getElementById('typeInput').value;
+            const rating = parseInt(document.getElementById('ratingInput').value);
+            const date = document.getElementById('dateInput').value;
+            const synopsis = document.getElementById('synopsisInput').value.trim();
+            const coverFile = document.getElementById('coverInput').files[0];
+
+            if (!title || !chapter || !type || !rating || !date) {
+                alert('Mohon isi semua field yang wajib!');
+                return;
+            }
+
+            let cover = '';
+            if (coverFile) {
+                cover = await imageToBase64(coverFile);
+            } else if (editingIndex >= 0 && comics[editingIndex].cover) {
+                cover = comics[editingIndex].cover;
+            }
+
+            const comic = {
+                id: editingIndex >= 0 ? comics[editingIndex].id : Date.now(),
+                cover,
+                title,
+                chapter,
+                type,
+                rating,
+                date,
+                synopsis
+            };
+
+            if (editingIndex >= 0) {
+                comics[editingIndex] = comic;
+            } else {
+                comics.unshift(comic);
+            }
+
+            const saved = await saveToGitHub();
+            if (saved) {
+                renderComics();
+                closeModal();
+            }
+        }
+
+        // Delete comic
+        async function deleteComic(index) {
+            if (confirm('Yakin ingin menghapus komik ini?')) {
+                comics.splice(index, 1);
+                const saved = await saveToGitHub();
+                if (saved) {
+                    renderComics();
+                }
+            }
+        }
+
+        // Render comics
+        function renderComics() {
+            const grid = document.getElementById('comicGrid');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filteredComics = comics.filter(comic => 
+                comic.title.toLowerCase().includes(searchTerm) ||
+                comic.type.toLowerCase().includes(searchTerm) ||
+                comic.synopsis.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredComics.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📚 Belum ada komik</h3>
+                        <p>Tambahkan komik pertama Anda!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filteredComics.map((comic, index) => {
+                const originalIndex = comics.indexOf(comic);
+                const stars = '⭐'.repeat(Math.min(5, Math.floor(comic.rating / 2)));
+                
+                return `
+                    <div class="card">
+                        ${comic.cover ? `<img src="${comic.cover}" alt="${comic.title}" class="card-image">` : '<div class="card-image"></div>'}
+                        <div class="card-content">
+                            <h3 class="card-title">${comic.title}</h3>
+                            <div class="card-meta">
+                                <span class="meta-item">📖 Ch. ${comic.chapter}</span>
+                                <span class="type-badge type-${comic.type}">${comic.type.toUpperCase()}</span>
+                                <span class="meta-item rating">${stars} ${comic.rating}/10</span>
+                            </div>
+                            <div class="meta-item">📅 ${new Date(comic.date).toLocaleDateString('id-ID')}</div>
+                            ${comic.synopsis ? `<p class="synopsis">${comic.synopsis}</p>` : ''}
+                            <div class="card-actions">
+                                <button class="btn btn-small btn-edit" onclick="openModal(${originalIndex})">✏️ Edit</button>
+                                <button class="btn btn-small btn-delete" onclick="deleteComic(${originalIndex})">🗑️ Hapus</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', renderComics);
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            if (githubConfig.token && githubConfig.repo) {
+                loadFromGitHub();
+            }
+        });
+    </script>
+</body>
+</html>
